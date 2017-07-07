@@ -14,7 +14,7 @@ int DirectoryTreeModel::columnCount(const QModelIndex&) const {
     if (root == nullptr) {
         return 0;
     }
-    return root->dataSize();
+    return root->getDataObjectsCount();
 }
 
 QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
@@ -22,7 +22,8 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
         return QVariant();
     }
     DirectoryTreeItem *item = static_cast<DirectoryTreeItem *>(index.internalPointer());
-    return item->getData(index.column());
+//    return item->getData(index.column());
+    return item->getDataObject(index.column());
 }
 
 int DirectoryTreeModel::rowCount(const QModelIndex &parentIndex) const {
@@ -30,10 +31,12 @@ int DirectoryTreeModel::rowCount(const QModelIndex &parentIndex) const {
         return 0;
     }
     if (!parentIndex.isValid()) {
-        return root->childSize();
+//        return root->childSize();
+        return root->getSubdirsCount();
     } else {
         DirectoryTreeItem *item = static_cast<DirectoryTreeItem *>(parentIndex.internalPointer());
-        return item->childSize();
+//        return item->childSize();
+        return item->getSubdirsCount();
     }
 }
 
@@ -51,9 +54,9 @@ QModelIndex DirectoryTreeModel::index(int row, int column, const QModelIndex &pa
 }
 
 QVariant DirectoryTreeModel::headerData(int section, Qt::Orientation orientation, int role) const {
-    if (orientation != Qt::Orientation::Horizontal ||
-            role != Qt::DisplayRole ||
-            section >= COLUMNS_COUNT)
+    if (orientation != Qt::Orientation::Horizontal
+            || role != Qt::DisplayRole
+            || section >= COLUMNS_COUNT)
     {
         return QVariant();
     }

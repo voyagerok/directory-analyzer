@@ -27,12 +27,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     directory-tree-item.cpp \
-    directory-tree-model.cpp
+    directory-tree-model.cpp \
+    directory-analyzer.cpp
 
 HEADERS += \
         mainwindow.h \
     directory-tree-item.h \
-    directory-tree-model.h
+    directory-tree-model.h \
+    directory-analyzer.h
 
 FORMS += \
         mainwindow.ui
