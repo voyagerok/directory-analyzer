@@ -31,6 +31,9 @@ public slots:
     void handleProgressStarted();
     void handleProgressFinished();
     void handleStatusChanged(QString status);
+
+    void startScanning();
+    void stopScanning();
 };
 
 #endif // MAINWINDOW_H

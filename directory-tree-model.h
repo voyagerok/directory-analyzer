@@ -31,9 +31,14 @@ public:
     QVector<std::tuple<QString, qint64>> getFileTypesInfo(const QModelIndex &index);
 
     void buildIndex(const QString &rootDirectory);
+    void buildIndex(const QModelIndex &index);
+    void stopProgress();
+    void setRootPath(const QString &path);
+    void setDefaultPath();
 
 private:
-    DirectoryTreeItem *root = Q_NULLPTR;
+//    DirectoryTreeItem *root = Q_NULLPTR;
+    QVector<DirectoryTreeItem *> rootItems;
 //    DirectoryAnalyzer *analyzer;
     DirectoryTreeAnalyzer *analyzer;
 

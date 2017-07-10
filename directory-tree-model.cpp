@@ -6,7 +6,7 @@
 #include <QTextStream>
 
 #define COLUMNS_COUNT 4
-static const char *columnLabels[COLUMNS_COUNT] = {"Path", "Directories", "Files Count", "Size"};
+static const char *columnLabels[COLUMNS_COUNT] = {"Path", "Subdirectories", "Files Count", "Size"};
 
 DirectoryTreeModel::DirectoryTreeModel(const QString &rootDir, QObject *parent):
     QAbstractItemModel(parent)
@@ -20,6 +20,7 @@ DirectoryTreeModel::DirectoryTreeModel(const QString &rootDir, QObject *parent):
     connect(analyzer, &DirectoryTreeAnalyzer::sizeUpdated, this, &DirectoryTreeModel::onNodeUpdated);
     connect(analyzer, &DirectoryTreeAnalyzer::done, this, &DirectoryTreeModel::progressFinished);
     connect(analyzer, &DirectoryTreeAnalyzer::statusChanged, this, &DirectoryTreeModel::statusChanged);
+    connect(analyzer, &DirectoryTreeAnalyzer::progressStarted, this, &DirectoryTreeModel::progressStarted);
 
 //    emit progressStarted();
 //    analyzer->start(root);
@@ -33,24 +34,76 @@ DirectoryTreeModel::~DirectoryTreeModel() {
 //    dirAnalyzer->stopWorkers();
     delete analyzer;
 //    delete analyzer;
-    if (root) {
-        delete root;
+//    if () {
+//        delete root;
+//    }
+    qDeleteAll(rootItems);
+}
+
+
+//void DirectoryTreeModel::buildIndex(const QString &rootDir) {
+//    root = new DirectoryTreeItem(rootDir, 0);
+//    analyzer->start(root);
+//}
+
+void DirectoryTreeModel::buildIndex(const QModelIndex &index) {
+    if (index.isValid()) {
+        emit beginResetModel();
+        analyzer->stop();
+        DirectoryTreeItem *node = static_cast<DirectoryTreeItem *>(index.internalPointer());
+        node->reset();
+        analyzer->start(node);
+        emit endResetModel();
     }
 }
 
-
-void DirectoryTreeModel::buildIndex(const QString &rootDir) {
-    root = new DirectoryTreeItem(rootDir, 0);
-    analyzer->start(root);
-    emit progressStarted();
+void DirectoryTreeModel::stopProgress() {
+    if (analyzer->isRunning()) {
+         analyzer->stop();
+    }
 }
+
+void DirectoryTreeModel::setRootPath(const QString &rootPath) {
+    emit beginResetModel();
+    stopProgress();
+//    if (root != Q_NULLPTR) {
+//        delete root;
+//    }
+    qDeleteAll(rootItems);
+    rootItems.clear();
+//    root = new DirectoryTreeItem(rootPath, 0);
+    rootItems.push_back(new DirectoryTreeItem(rootPath, 0));
+    emit endResetModel();
+//    notifyNodeUpdated(root);
+}
+
+void DirectoryTreeModel::setDefaultPath() {
+    emit beginResetModel();
+    stopProgress();
+    qDeleteAll(rootItems);
+    rootItems.clear();
+#ifdef Q_OS_WIN
+    QFileInfoList drivesInfo = QDir::drives();
+    for (int i = 0; i < drivesInfo.size(); ++i) {
+        DirectoryTreeItem *item = new DirectoryTreeItem(drivesInfo[i].absoluteFilePath(), i);
+        rootItems.push_back(item);
+    }
+#else
+    rootItems.push_back(new DirectoryTreeItem(QDir::root(), 0));
+    emit endResetModel();
+#endif
+}
+
+//#ifdef Q_OS_WIN
+//    QFileInfoList drives = QDir::drv
+//}
 
 
 int DirectoryTreeModel::columnCount(const QModelIndex&) const {
-    if (root == nullptr) {
+    if (rootItems.empty()) {
         return 0;
     }
-    return root->getDataObjectsCount();
+    return rootItems[0]->getDataObjectsCount();
 }
 
 QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
@@ -68,27 +121,33 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
 }
 
 int DirectoryTreeModel::rowCount(const QModelIndex &parentIndex) const {
-    if (root == nullptr) {
+//    if (root == nullptr) {
+//        return 0;
+//    }
+    if (rootItems.empty()) {
         return 0;
     }
     DirectoryTreeItem *node;
     if (!parentIndex.isValid()) {
-        node = root;
-        return 1;
+//        node = root;
+//        return 1;
+        return rootItems.size();
     } else {
         node = static_cast<DirectoryTreeItem *>(parentIndex.internalPointer());
+        return node->getChildrenCount();
     }
-    int result = node->getChildrenCount();
-    return result;
 }
 
 QModelIndex DirectoryTreeModel::index(int row, int column, const QModelIndex &parentIndex) const {
-    if (root == nullptr) {
+//    if (root == nullptr) {
+//        return QModelIndex();
+//    }
+    if (rootItems.empty()) {
         return QModelIndex();
     }
     DirectoryTreeItem *item;
     if (!parentIndex.isValid()) {
-        item = root;
+        item = rootItems[row];
     } else {
 //        item = static_cast<DirectoryTreeItem *>(parentIndex.internalPointer());
         DirectoryTreeItem *parentItem = static_cast<DirectoryTreeItem *>(parentIndex.internalPointer());
@@ -121,7 +180,7 @@ QModelIndex DirectoryTreeModel::parent(const QModelIndex &index) const {
 }
 
 Qt::ItemFlags DirectoryTreeModel::flags(const QModelIndex&) const {
-    return Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsSelectable;
+    return Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsUserCheckable | Qt::ItemFlag::ItemIsSelectable;
 }
 
 bool DirectoryTreeModel::hasChildren(const QModelIndex &index) const {
@@ -129,7 +188,8 @@ bool DirectoryTreeModel::hasChildren(const QModelIndex &index) const {
         return true;
     }
     DirectoryTreeItem *node = static_cast<DirectoryTreeItem *>(index.internalPointer());
-    return node->getSubdirsCount() > 0;
+//    return node->getSubdirsCount() > 0;
+    return node->getChildrenCount() > 0;
 }
 
 QVector<std::tuple<QString, qint64>> DirectoryTreeModel::getFileTypesInfo(const QModelIndex &index) {

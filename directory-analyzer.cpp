@@ -154,6 +154,7 @@ void DirectoryTreeAnalyzer::start(DirectoryTreeItem *node) {
 //                         << node->getDirectory().absolutePath();
 //    emit statusChanged(status);
 
+    emit progressStarted();
     builderThread = new DirectoryTreeBuilderThread(node);
     connect(builderThread, &DirectoryTreeBuilderThread::buildingCompleted, this, &DirectoryTreeAnalyzer::buildCompleted);
     connect(builderThread, &DirectoryTreeBuilderThread::buildFinished, this, &DirectoryTreeAnalyzer::startSizeCalculating);
@@ -176,7 +177,8 @@ void DirectoryTreeAnalyzer::stopCalculationThreads() {
     mutex.lock();
     poolInterruptionFlag = true;
     mutex.unlock();
-    QThreadPool::globalInstance()->waitForDone();
+//    QThreadPool::globalInstance()->waitForDone();
+    pool->waitForDone();
     poolInterruptionFlag = false;
 }
 
@@ -192,7 +194,8 @@ void DirectoryTreeAnalyzer::startSizeCalculating(DirectoryTreeItem *root) {
     connect(worker, &DirectoryTreeSizeCalculator::doneCalculation, this, &DirectoryTreeAnalyzer::onSizeUpdated);
     connect(worker, &DirectoryTreeSizeCalculator::done, this, &DirectoryTreeAnalyzer::done);
     connect(worker, &DirectoryTreeSizeCalculator::statusChanged, this, &DirectoryTreeAnalyzer::statusChanged);
-    QThreadPool::globalInstance()->start(worker);
+//    QThreadPool::globalInstance()->start(worker);
+    pool->start(worker);
 }
 
 void DirectoryTreeAnalyzer::onSizeUpdated(DirectoryTreeItem *node, FileTypesInfoStorage storage) {
@@ -201,4 +204,8 @@ void DirectoryTreeAnalyzer::onSizeUpdated(DirectoryTreeItem *node, FileTypesInfo
     node->updateTotalSize(allTypesInfo.totalSize);
     node->updateFileTypesInfo(std::move(storage));
     emit sizeUpdated(node);
+}
+
+bool DirectoryTreeAnalyzer::isRunning() const {
+    return (builderThread && builderThread->isRunning()) || pool->activeThreadCount() > 0;
 }

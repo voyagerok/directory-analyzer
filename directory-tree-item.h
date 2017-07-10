@@ -61,6 +61,8 @@ public:
 
     void appendChild(DirectoryTreeItem *child) { children.push_back(child); }
 
+    void reset();
+
 private:
     QVector<DirectoryTreeItem *> children;
     DirectoryTreeItem *parent;

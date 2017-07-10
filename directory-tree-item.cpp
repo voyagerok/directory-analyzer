@@ -49,6 +49,8 @@ public:
     void updateFileTypesInfo(const FileTypesInfoStorage &fileTypesInfo) { this->fileTypesInfo = fileTypesInfo; }
     void updateFileTypesInfo(FileTypesInfoStorage &&fileTypesInfo) { std::swap(this->fileTypesInfo, fileTypesInfo); }
 
+    void resetSizeInfo() { updateFilesCount(-1); updateTotalSize(-1); fileTypesInfo.clear(); }
+
 private:
     QDir dir;
     std::tuple<QString, int, int, qint64> data;
@@ -67,14 +69,14 @@ QVariant DirectoryTreeItemPrivate::getDataAtPosition(int position, DataExtractio
             return QVariant(std::get<FILES_COUNT>(data));
         } else {
             status = DataExtractionStatus::INVALID;
-            return QVariant("Computing...");
+            return QVariant("Undefined");
         }
     case TOTAL_SIZE:
         if (sizeIsValid()) {
             return QVariant(Utils::size_human(std::get<TOTAL_SIZE>(data)));
         } else {
             status = DataExtractionStatus::INVALID;
-            return QVariant("Computing...");
+            return QVariant("Undefined");
         }
     default:
         status = DataExtractionStatus::INVALID;
@@ -151,6 +153,12 @@ void DirectoryTreeItem::updateFileTypesInfo(FileTypesInfoStorage &&fileTypesInfo
 
 FileTypesInfoStorage &DirectoryTreeItem::getFileTypesInfo() {
     return privImpl->getFileTypesInfo();
+}
+
+void DirectoryTreeItem::reset() {
+    qDeleteAll(children);
+    children.clear();
+    privImpl->resetSizeInfo();
 }
 
 void DirectoryTreeItem::populate() {

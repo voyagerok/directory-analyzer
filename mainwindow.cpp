@@ -9,6 +9,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    connect(ui->actionExit, &QAction::triggered, QApplication::instance(), &QApplication::quit);
+    connect(ui->actionStart, &QAction::triggered, this, &MainWindow::startScanning);
+    connect(ui->actionStop, &QAction::triggered, this, &MainWindow::stopScanning);
+
     ui->progressBar->setValue(0);
 
     this->customDirModel = new DirectoryTreeModel(QDir::rootPath(), this);
@@ -16,7 +20,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(customDirModel, &DirectoryTreeModel::progressStarted, this, &MainWindow::handleProgressStarted);
     connect(customDirModel, &DirectoryTreeModel::progressFinished, this, &MainWindow::handleProgressFinished);
     ui->dirView->setModel(customDirModel);
-    customDirModel->buildIndex(QDir::rootPath());
+    customDirModel->setDefaultPath();
+//    customDirModel->setRootPath(QDir::rootPath());
+//    customDirModel->buildIndex(QDir::rootPath());
 
     fileTypesModel = new QStandardItemModel(this);
     fileTypesModel->setHorizontalHeaderLabels({"File Type", "Size"});
@@ -48,11 +54,32 @@ void MainWindow::handleProgressFinished() {
     ui->progressBar->setMaximum(1);
     ui->progressBar->setValue(1);
 //    ui->statusBar->clearMessage();
-    ui->statusBar->showMessage("Done");
+    ui->statusBar->showMessage("Done", 2000);
 }
 
 void MainWindow::handleProgressStarted() {
     ui->progressBar->setRange(0,0);
+}
+
+void MainWindow::startScanning() {
+//    QItemSelectionModel *model = ui->dirView->selectionModel();
+//    QModelIndexList selectedIndexes = model->selectedIndexes();
+//    if (selectedIndexes.empty()) {
+//        ui->statusBar->showMessage("You should select directory before starting scanning", 4000);
+//        return;
+//    }
+
+    QModelIndex index = ui->dirView->currentIndex();
+    if (!index.isValid()) {
+        ui->statusBar->showMessage("You should select directory before starting scanning", 4000);
+        return;
+    }
+
+    customDirModel->buildIndex(index);
+}
+
+void MainWindow::stopScanning() {
+    customDirModel->stopProgress();
 }
 
 MainWindow::~MainWindow()

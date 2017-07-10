@@ -82,20 +82,24 @@ private:
 class DirectoryTreeAnalyzer: public QObject {
     Q_OBJECT
 public:
-    DirectoryTreeAnalyzer(QObject *parent = Q_NULLPTR): QObject{parent} { qRegisterMetaType<FileTypesInfoStorage>(); }
+    DirectoryTreeAnalyzer(QObject *parent = Q_NULLPTR): QObject{parent}, pool {new QThreadPool(this)} { qRegisterMetaType<FileTypesInfoStorage>(); }
     ~DirectoryTreeAnalyzer() { stopBuilderThread(); stopCalculationThreads(); }
     void start(DirectoryTreeItem *root);
+    void stop() { stopBuilderThread(); stopCalculationThreads(); emit done(); }
+    bool isRunning() const;
 private:
     void stopBuilderThread();
     void stopCalculationThreads();
     DirectoryTreeBuilderThread *builderThread = Q_NULLPTR;
     QMutex mutex;
+    QThreadPool *pool;
     bool poolInterruptionFlag = false;
 signals:
     void buildCompleted(DirectoryTreeItem *node);
     void sizeUpdated(DirectoryTreeItem *node);
     void statusChanged(QString status);
     void done();
+    void progressStarted();
 private slots:
     void startSizeCalculating(DirectoryTreeItem *root);
     void onSizeUpdated(DirectoryTreeItem *node, FileTypesInfoStorage storage);
