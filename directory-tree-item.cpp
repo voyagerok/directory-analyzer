@@ -10,15 +10,21 @@
 using DataExtractionStatus = DirectoryTreeItem::DataExtractionStatus;
 
 class DirectoryTreeItemPrivate {
+    static constexpr QFlags<QDir::Filter> filterFlags =
+            QDir::Dirs
+            | QDir::NoDotAndDotDot
+            | QDir::NoSymLinks
+            | QDir::Hidden;
+
 public:
     DirectoryTreeItemPrivate(const QString &absPath):
         dir {QDir{absPath}},
-        data {std::make_tuple(dir.isRoot() ? dir.absolutePath() : dir.dirName(), dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot).size(), -1, -1)}
+        data {std::make_tuple(dir.isRoot() ? dir.absolutePath() : dir.dirName(), dir.entryList(filterFlags).size(), -1, -1)}
     {
     }
     DirectoryTreeItemPrivate(const QDir &dir):
         dir {dir},
-        data {std::make_tuple(dir.isRoot() ? dir.absolutePath() : dir.dirName(), dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot).size(), -1, -1)}
+        data {std::make_tuple(dir.isRoot() ? dir.absolutePath() : dir.dirName(), dir.entryList(filterFlags).size(), -1, -1)}
     {
     }
 
@@ -56,6 +62,8 @@ private:
     std::tuple<QString, int, int, qint64> data;
     FileTypesInfoStorage fileTypesInfo;
 };
+
+constexpr QFlags<QDir::Filter> DirectoryTreeItemPrivate::filterFlags;
 
 QVariant DirectoryTreeItemPrivate::getDataAtPosition(int position, DataExtractionStatus &status) {
     status = DataExtractionStatus::VALID;

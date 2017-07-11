@@ -174,8 +174,8 @@ QModelIndex DirectoryTreeModel::parent(const QModelIndex &index) const {
     }
     DirectoryTreeItem *node = static_cast<DirectoryTreeItem *>(index.internalPointer());
     if (node->hasParent()) {
-        qDebug() << node->getAbsolutePath();
-        return createIndex(node->getParent()->getPosition(), index.column(), node->getParent());
+//        qDebug() << node->getAbsolutePath();
+        return createIndex(node->getParent()->getPosition(), 0, node->getParent());
     } else {
         return QModelIndex();
     }
