@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <QTextStream>
+#include <QDebug>
 
 #define COLUMNS_COUNT 4
 static const char *columnLabels[COLUMNS_COUNT] = {"Path", "Subdirectories", "Files Count", "Size"};
@@ -48,12 +49,12 @@ DirectoryTreeModel::~DirectoryTreeModel() {
 
 void DirectoryTreeModel::buildIndex(const QModelIndex &index) {
     if (index.isValid()) {
-        emit beginResetModel();
         analyzer->stop();
         DirectoryTreeItem *node = static_cast<DirectoryTreeItem *>(index.internalPointer());
+        emit beginRemoveRows(index, 0, node->isLeaf() ? 0 : node->getChildrenCount() - 1);
         node->reset();
+        emit endRemoveRows();
         analyzer->start(node);
-        emit endResetModel();
     }
 }
 
@@ -173,6 +174,7 @@ QModelIndex DirectoryTreeModel::parent(const QModelIndex &index) const {
     }
     DirectoryTreeItem *node = static_cast<DirectoryTreeItem *>(index.internalPointer());
     if (node->hasParent()) {
+        qDebug() << node->getAbsolutePath();
         return createIndex(node->getParent()->getPosition(), index.column(), node->getParent());
     } else {
         return QModelIndex();
@@ -180,7 +182,7 @@ QModelIndex DirectoryTreeModel::parent(const QModelIndex &index) const {
 }
 
 Qt::ItemFlags DirectoryTreeModel::flags(const QModelIndex&) const {
-    return Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsUserCheckable | Qt::ItemFlag::ItemIsSelectable;
+    return Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsSelectable;
 }
 
 bool DirectoryTreeModel::hasChildren(const QModelIndex &index) const {
@@ -203,7 +205,7 @@ QVector<std::tuple<QString, qint64>> DirectoryTreeModel::getFileTypesInfo(const 
     for (const auto &infoObject : storage) {
         qint64 totalSize = infoObject.second.totalSize;
         int filesCount = infoObject.second.filesCount;
-        qint64 avgSize = static_cast<qint64>(std::ceil(static_cast<double>(totalSize) / filesCount));
+        qint64 avgSize = filesCount ? static_cast<qint64>(std::ceil(static_cast<double>(totalSize) / filesCount)) : 0;
         result.push_back(std::make_tuple(infoObject.first, avgSize));
     }
 

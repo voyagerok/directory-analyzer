@@ -19,6 +19,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
+
 private:
     Ui::MainWindow *ui;
 

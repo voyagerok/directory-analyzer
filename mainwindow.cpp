@@ -3,6 +3,8 @@
 #include "directory-tree-model.h"
 #include "utils.h"
 
+#include <QContextMenuEvent>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -15,6 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->progressBar->setValue(0);
 
+//    dirModel = new QFileSystemModel(this);
+//    dirModel->setRootPath(QDir::rootPath());
+//    ui->dirView->setModel(dirModel);
+
+
     this->customDirModel = new DirectoryTreeModel(QDir::rootPath(), this);
     connect(customDirModel, &DirectoryTreeModel::statusChanged, this, &MainWindow::handleStatusChanged);
     connect(customDirModel, &DirectoryTreeModel::progressStarted, this, &MainWindow::handleProgressStarted);
@@ -25,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //    customDirModel->buildIndex(QDir::rootPath());
 
     fileTypesModel = new QStandardItemModel(this);
-    fileTypesModel->setHorizontalHeaderLabels({"File Type", "Size"});
+    fileTypesModel->setHorizontalHeaderLabels({"File Type", "Average Size"});
     ui->filesInfoView->setModel(fileTypesModel);
     ui->filesInfoView->verticalHeader()->hide();
 
@@ -80,6 +87,13 @@ void MainWindow::startScanning() {
 
 void MainWindow::stopScanning() {
     customDirModel->stopProgress();
+}
+
+void MainWindow::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu menu(this);
+    menu.addAction(ui->actionStart);
+    menu.exec(event->globalPos());
 }
 
 MainWindow::~MainWindow()

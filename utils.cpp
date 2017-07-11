@@ -12,10 +12,10 @@ QString size_human(qint64 rawSize) {
     QStringListIterator i(list);
     QString unit("bytes");
 
-    while(num >= 1000.0 && i.hasNext())
+    while(num >= 1024.0 && i.hasNext())
      {
         unit = i.next();
-        num /= 1000.0;
+        num /= 1024.0;
     }
     return QString().setNum(num,'f',2)+" "+unit;
 }

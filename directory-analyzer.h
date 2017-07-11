@@ -85,7 +85,7 @@ public:
     DirectoryTreeAnalyzer(QObject *parent = Q_NULLPTR): QObject{parent}, pool {new QThreadPool(this)} { qRegisterMetaType<FileTypesInfoStorage>(); }
     ~DirectoryTreeAnalyzer() { stopBuilderThread(); stopCalculationThreads(); }
     void start(DirectoryTreeItem *root);
-    void stop() { stopBuilderThread(); stopCalculationThreads(); emit done(); }
+    void stop();
     bool isRunning() const;
 private:
     void stopBuilderThread();
