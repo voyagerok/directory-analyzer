@@ -4,6 +4,7 @@
 #include <QAbstractItemModel>
 #include <memory>
 #include <tuple>
+#include <QFileIconProvider>
 
 class DirectoryTreeItem;
 class DirectoryAnalyzer;
@@ -41,6 +42,7 @@ private:
     QVector<DirectoryTreeItem *> rootItems;
 //    DirectoryAnalyzer *analyzer;
     DirectoryTreeAnalyzer *analyzer;
+    QFileIconProvider iconProvider;
 
     void notifyNodeUpdated(DirectoryTreeItem *node);
 private slots:

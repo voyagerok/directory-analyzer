@@ -109,16 +109,19 @@ int DirectoryTreeModel::columnCount(const QModelIndex&) const {
 
 QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
     using ExtractionStatus = DirectoryTreeItem::DataExtractionStatus;
-    if (!index.isValid() || role != Qt::DisplayRole) {
+    if (!index.isValid()) {
         return QVariant();
     }
-    DirectoryTreeItem *item = static_cast<DirectoryTreeItem *>(index.internalPointer());
-    ExtractionStatus status;
-    auto result = item->getDataObject(index.column(), status);
-//    if (status == ExtractionStatus::INVALID) {
-//        analyzer->updateDirectoryNode(item);
-//    }
-    return result;
+    if (index.column() == 0 && role == Qt::DecorationRole) {
+        return iconProvider.icon(QFileIconProvider::Folder);
+    } else if (role == Qt::DisplayRole) {
+        DirectoryTreeItem *item = static_cast<DirectoryTreeItem *>(index.internalPointer());
+        ExtractionStatus status;
+        auto result = item->getDataObject(index.column(), status);
+        return result;
+    } else {
+        return QVariant();
+    }
 }
 
 int DirectoryTreeModel::rowCount(const QModelIndex &parentIndex) const {
